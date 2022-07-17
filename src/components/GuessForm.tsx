@@ -1,4 +1,11 @@
-import { Box, Button, Container, FormLabel, TextField } from '@mui/material';
+import {
+  Box,
+  Button,
+  Container,
+  FormLabel,
+  Snackbar,
+  TextField,
+} from '@mui/material';
 import axios from 'axios';
 import React from 'react';
 import { useDispatch } from 'react-redux';
@@ -7,6 +14,9 @@ import { addGuess } from '../store';
 function GuessForm() {
   const [guess, setGuess] = React.useState<string>();
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+  const [snackbarOpen, setSnackbarOpen] = React.useState<boolean>(false);
+  const [snackbarText, setSnackbarText] = React.useState<string>();
+
   const dispatch = useDispatch();
 
   const handleGuessChange = async (
@@ -20,18 +30,40 @@ function GuessForm() {
     event.preventDefault();
     setIsSubmitting(true);
 
-    const result = await axios({
-      method: 'GET',
-      url: 'http://localhost:5000/whoami',
-      params: { name: guess },
-    });
+    if (!guess) {
+      setSnackbarOpen(true);
+      setSnackbarText('Please enter a name in English');
+      setIsSubmitting(false);
+      return;
+    }
 
-    dispatch(
-      addGuess({
-        ...result.data,
-        name: guess,
-      })
-    );
+    if (!/^[A-Za-z]*$/.test(guess)) {
+      console.log('first');
+      setSnackbarOpen(true);
+      setSnackbarText('Name must be in English');
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const result = await axios({
+        method: 'GET',
+        url: 'http://localhost:5000/whoami',
+        params: { name: guess },
+      });
+
+      dispatch(
+        addGuess({
+          ...result.data,
+          name: guess,
+        })
+      );
+    } catch (err) {
+      console.log(err);
+      setSnackbarOpen(true);
+      setSnackbarText('Somthing went wrong');
+    }
+
     setIsSubmitting(false);
   };
 
@@ -98,6 +130,11 @@ function GuessForm() {
           Guess
         </Button>
       </Box>
+      <Snackbar
+        open={snackbarOpen}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarText}
+      />
     </Container>
   );
 }

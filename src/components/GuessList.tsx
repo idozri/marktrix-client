@@ -31,8 +31,9 @@ function GuessList() {
           py: 2,
         }}
       >
-        {guesses.map((g: Guess) => (
+        {guesses.map((g: Guess, index) => (
           <Box
+            key={index}
             sx={{
               alignItems: 'center',
               boxSizing: 'border-box',
